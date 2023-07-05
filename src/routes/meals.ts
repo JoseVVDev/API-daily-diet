@@ -131,4 +131,77 @@ export async function mealsRoutes(app: FastifyInstance) {
       return reply.status(201).send()
     },
   )
+
+  app.get(
+    '/summary',
+    {
+      preHandler: checkIfUserExists,
+    },
+    async (request, reply) => {
+      const userId = request.cookies.userId
+      const mealsCount = await knex('meals')
+        .where('userId', userId)
+        .count('id', { as: 'meals' })
+      return { mealsCount }
+    },
+  )
+
+  app.get(
+    '/summaryOnDiet',
+    {
+      preHandler: checkIfUserExists,
+    },
+    async (request, reply) => {
+      const userId = request.cookies.userId
+      const mealsCount = await knex('meals')
+        .where('userId', userId)
+        .where('diet', 1)
+        .count('id', { as: 'meals' })
+      return { mealsCount }
+    },
+  )
+
+  app.get(
+    '/summaryOutsideDiet',
+    {
+      preHandler: checkIfUserExists,
+    },
+    async (request, reply) => {
+      const userId = request.cookies.userId
+      const mealsCount = await knex('meals')
+        .where('userId', userId)
+        .where('diet', 0)
+        .count('id', { as: 'meals' })
+      return { mealsCount }
+    },
+  )
+
+  app.get(
+    '/bestStreak',
+    {
+      preHandler: checkIfUserExists,
+    },
+    async (request, reply) => {
+      const userId = request.cookies.userId
+      const meals = await knex('meals').where('userId', userId).select('diet')
+      let streak = 0
+      let acc = 0
+
+      meals.map((meal) => {
+        if (meal.diet) {
+          acc++
+
+          if (acc > streak) {
+            streak = acc
+          }
+        } else {
+          acc = 0
+        }
+
+        return streak
+      })
+
+      return { bestStreak: streak }
+    },
+  )
 }
